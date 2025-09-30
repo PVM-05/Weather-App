@@ -34,6 +34,7 @@ dependencies:
   geolocator: ^14.0.2  # Lấy vị trí GPS
   permission_handler: ^12.0.1  # Xử lý quyền
   intl: ^0.20.2  # Định dạng ngày giờ
+  provider: ^6.1.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
