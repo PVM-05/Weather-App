@@ -49,6 +49,10 @@ class WeatherProvider with ChangeNotifier {
 
     try {
       final weather = await weatherRepository.getWeatherByCity(cityName);
+      if (weather == null) {
+        _error = 'Không tìm thấy dữ liệu cho thành phố: $cityName';
+        return null;
+      }
       final index = _savedCities.indexOf(cityName);
       if (index != -1) {
         _savedWeathers[index] = weather;
@@ -56,10 +60,10 @@ class WeatherProvider with ChangeNotifier {
         _savedCities.add(cityName);
         _savedWeathers.add(weather);
       }
-      await _saveWeathers(); // Lưu sau khi cập nhật
+      await _saveWeathers();
       return weather;
     } catch (e) {
-      _error = e.toString().replaceFirst('Exception: ', '');
+      _error = 'Lỗi khi tìm kiếm thành phố $cityName: ${e.toString().replaceFirst('Exception: ', '')}';
       return null;
     } finally {
       _isLoading = false;
@@ -88,11 +92,17 @@ class WeatherProvider with ChangeNotifier {
     _savedWeathers = savedWeathersJson
         .map((json) => Weather.fromJson(jsonDecode(json)))
         .toList();
-    _savedWeathers = List<Weather?>.filled(_savedCities.length, null)
-      ..setRange(0, _savedWeathers.length, _savedWeathers);
-    // Tải lại dữ liệu mới nhất cho các thành phố đã lưu
+    // Đảm bảo độ dài của _savedWeathers khớp với _savedCities
+    if (_savedWeathers.length < _savedCities.length) {
+      _savedWeathers = List<Weather?>.filled(_savedCities.length, null)
+        ..setRange(0, _savedWeathers.length, _savedWeathers);
+    } else if (_savedWeathers.length > _savedCities.length) {
+      _savedWeathers = _savedWeathers.sublist(0, _savedCities.length);
+    }
     for (var city in _savedCities) {
-      await fetchWeatherByCity(city);
+      if (_savedWeathers[_savedCities.indexOf(city)] == null) {
+        await fetchWeatherByCity(city);
+      }
     }
     notifyListeners();
   }
@@ -103,7 +113,7 @@ class WeatherProvider with ChangeNotifier {
       _savedWeathers.add(null);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setStringList('saved_cities', _savedCities);
-      await fetchWeatherByCity(cityName); // Cập nhật weather và lưu
+      await fetchWeatherByCity(cityName);
       notifyListeners();
     }
   }

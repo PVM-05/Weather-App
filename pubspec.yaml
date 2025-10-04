@@ -15,7 +15,6 @@ dependencies:
   intl: ^0.20.2
   provider: ^6.1.2
   shared_preferences: ^2.2.3
-  lottie: ^3.1.2  # Thêm cho animation thời tiết từ video
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -25,8 +24,21 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-  - assets/images/clear_sky.png
-  - assets/images/overcast.png
-  - assets/images/rain.png
-  - assets/images/fog.png
-  - assets/images/thunderstorm.png
+    - assets/images/01d.png
+    - assets/images/01n.png
+    - assets/images/02d.png
+    - assets/images/02n.png
+    - assets/images/03d.png
+    - assets/images/03n.png
+    - assets/images/04d.png
+    - assets/images/04n.png
+    - assets/images/09d.png
+    - assets/images/09n.png
+    - assets/images/10d.png
+    - assets/images/10n.png
+    - assets/images/11d.png
+    - assets/images/11n.png
+    - assets/images/13d.png
+    - assets/images/13n.png
+    - assets/images/50d.png
+    - assets/images/50n.png

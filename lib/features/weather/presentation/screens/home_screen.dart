@@ -1,39 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/weather_provider.dart';
+import '../widgets/weather_card.dart';
 import 'search_screen.dart';
-
-// Ánh xạ mô tả thời tiết từ tiếng Anh sang tiếng Việt
-final Map<String, String> weatherTranslations = {
-  'clear sky': 'Trời quang đãng',
-  'few clouds': 'Ít mây',
-  'scattered clouds': 'Mây rải rác',
-  'broken clouds': 'Mây phân tán',
-  'overcast clouds': 'Nhiều mây',
-  'light rain': 'Mưa nhẹ',
-  'moderate rain': 'Mưa vừa',
-  'heavy rain': 'Mưa lớn',
-  'shower rain': 'Mưa rào',
-  'snow': 'Tuyết',
-  'mist': 'Sương mù',
-  'thunderstorm': 'Bão',
-};
-
-// Ánh xạ mô tả thời tiết sang hình ảnh tĩnh
-final Map<String, String> weatherImages = {
-  'clear sky': 'assets/images/clear_sky.png',
-  'few clouds': 'assets/images/few_clouds.png',
-  'scattered clouds': 'assets/images/few_clouds.png',
-  'broken clouds': 'assets/images/overcast.png',
-  'overcast clouds': 'assets/images/overcast.png',
-  'light rain': 'assets/images/rain.png',
-  'moderate rain': 'assets/images/rain.png',
-  'heavy rain': 'assets/images/rain.png',
-  'shower rain': 'assets/images/rain.png',
-  'snow': 'assets/images/snow.png',
-  'mist': 'assets/images/fog.png',
-  'thunderstorm': 'assets/images/thunderstorm.png',
-};
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -79,99 +48,47 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              // Body: Danh sách box cho địa điểm
+              // Body: Danh sách WeatherCard cho địa điểm
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: ListView.builder(
-                    itemCount: 1, // Giả định 1 địa điểm, thay bằng weatherProvider.weathers.length nếu có nhiều
+                  child: weatherProvider.savedCities.isEmpty && weatherProvider.weather == null
+                      ? const Center(child: Text('Không có dữ liệu thời tiết'))
+                      : ListView.builder(
+                    itemCount: (weatherProvider.weather != null ? 1 : 0) + weatherProvider.savedCities.length,
                     itemBuilder: (context, index) {
-                      final weather = weatherProvider.weather;
-                      if (weather == null) {
-                        return const Center(child: CircularProgressIndicator());
+                      if (index == 0 && weatherProvider.weather != null) {
+                        // Hiển thị thời tiết vị trí hiện tại
+                        return WeatherCard(
+                          weather: weatherProvider.weather,
+                          cityNameOverride: weatherProvider.weather?.cityName ?? 'Vị trí hiện tại',
+                        );
+                      } else if (weatherProvider.savedCities.isNotEmpty) {
+                        // Hiển thị thời tiết cho các thành phố đã lưu
+                        final cityIndex = index - (weatherProvider.weather != null ? 1 : 0);
+                        final city = weatherProvider.savedCities[cityIndex];
+                        final weather = weatherProvider.savedWeathers.length > cityIndex
+                            ? weatherProvider.savedWeathers[cityIndex]
+                            : null;
+                        return WeatherCard(
+                          weather: weather,
+                          cityNameOverride: city,
+                        );
                       }
-
-                      String translatedDescription = weather.description ?? 'Đang tải...';
-                      if (weather.description != null) {
-                        translatedDescription = weatherTranslations[weather.description.toLowerCase()] ??
-                            weather.description;
-                      }
-
-                      String imagePath = weatherImages[weather.description.toLowerCase()] ?? 'assets/images/clear_sky.png';
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 16.0),
-                        elevation: 4,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Cột trái: Tên địa điểm và tình trạng
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      weather.cityName ?? 'Không xác định',
-                                      style: const TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black87,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      translatedDescription,
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.black54,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Cột phải: Biểu tượng và nhiệt độ
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 60,
-                                    height: 60,
-                                    child: Image.asset(
-                                      imagePath,
-                                      fit: BoxFit.contain,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Text(
-                                    '${weather.temperature.toInt()}°',
-                                    style: const TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
+                      return const SizedBox.shrink(); // Tránh lỗi nếu index không hợp lệ
                     },
                   ),
                 ),
               ),
               // Nút vị trí
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: FloatingActionButton(
-                  onPressed: () => Provider.of<WeatherProvider>(context, listen: false).fetchWeather(),
-                  backgroundColor: const Color(0xFF00BCD4),
-                  child: const Icon(Icons.my_location, color: Colors.white),
-                ),
-              ),
+              // Padding(
+              //   padding: const EdgeInsets.all(16.0),
+              //   child: FloatingActionButton(
+              //     onPressed: () => Provider.of<WeatherProvider>(context, listen: false).fetchWeather(),
+              //     backgroundColor: const Color(0xFF00BCD4),
+              //     child: const Icon(Icons.my_location, color: Colors.white),
+              //   ),
+              // ),
             ],
           ),
         ),
