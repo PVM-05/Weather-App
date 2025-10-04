@@ -14,7 +14,9 @@ final Map<String, String> weatherTranslations = {
   'moderate rain': 'Mưa vừa',
   'heavy rain': 'Mưa lớn',
   'shower rain': 'Mưa rào',
-  // Thêm các bản dịch khác nếu cần
+  'snow': 'Tuyết',
+  'mist': 'Sương mù',
+  'thunderstorm': 'Bão',
 };
 
 class SearchScreen extends StatefulWidget {
@@ -73,7 +75,7 @@ class _SearchScreenState extends State<SearchScreen> {
         title: const Text('Quản lý thành phố'),
       ),
       body: Container(
-        color: Colors.grey[900], // Màu nền tối giống hình ảnh
+        color: Colors.grey[900],
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
@@ -81,17 +83,19 @@ class _SearchScreenState extends State<SearchScreen> {
               controller: _cityController,
               decoration: InputDecoration(
                 labelText: 'Nhập tên thành phố',
+                labelStyle: const TextStyle(color: Colors.white70),
+                hintText: 'Ví dụ: Hà Nội',
+                hintStyle: const TextStyle(color: Colors.white54),
                 border: const OutlineInputBorder(),
-                suffixIcon: const Icon(Icons.search),
+                suffixIcon: const Icon(Icons.search, color: Colors.white),
                 errorText: _errorMessage,
               ),
+              style: const TextStyle(color: Colors.white),
               onSubmitted: (value) => _addCity(context),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: weatherProvider.isLoading
-                  ? null
-                  : () => _addCity(context),
+              onPressed: weatherProvider.isLoading ? null : () => _addCity(context),
               child: const Text('Thêm'),
             ),
             const SizedBox(height: 16),
@@ -100,45 +104,48 @@ class _SearchScreenState extends State<SearchScreen> {
                 itemCount: weatherProvider.savedCities.length,
                 itemBuilder: (context, index) {
                   final city = weatherProvider.savedCities[index];
-                  return FutureBuilder<Weather?>(
-                    future: weatherProvider.fetchWeatherByCity(city),
-                    builder: (context, snapshot) {
-                      String translatedDescription = 'Đang tải...';
-                      if (snapshot.data?.description != null) {
-                        translatedDescription = weatherTranslations[snapshot.data!.description.toLowerCase()] ??
-                            snapshot.data!.description;
-                      }
-                      final temp = snapshot.data?.temperature.toInt() ?? 0;
-                      return ListTile(
-                        leading: const Icon(Icons.location_city, color: Colors.white),
-                        title: Text(
-                          city,
+                  final weather = weatherProvider.savedWeathers[index];
+
+                  // Hiển thị "Đang tải..." nếu weather chưa có dữ liệu
+                  String translatedDescription = 'Đang tải...';
+                  int temp = 0;
+                  if (weather != null) {
+                    translatedDescription = weatherTranslations[weather.description.toLowerCase()] ??
+                        weather.description;
+                    temp = weather.temperature.toInt();
+                  }
+
+                  return ListTile(
+                    leading: const Icon(Icons.location_city, color: Colors.white),
+                    title: Text(
+                      city,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '$temp°',
                           style: const TextStyle(color: Colors.white),
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              '$temp°',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () {
-                                weatherProvider.removeCityFromList(city);
-                              },
-                            ),
-                          ],
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            weatherProvider.removeCityFromList(city);
+                          },
                         ),
-                        subtitle: Text(
-                          translatedDescription,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        onTap: () {
-                          weatherProvider.fetchWeatherByCity(city);
-                          Navigator.pop(context); // Quay lại HomeScreen với dữ liệu mới
-                        },
-                      );
+                      ],
+                    ),
+                    subtitle: Text(
+                      translatedDescription,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    onTap: () async {
+                      // Tải lại dữ liệu thời tiết nếu cần
+                      if (weather == null) {
+                        await weatherProvider.fetchWeatherByCity(city);
+                      }
+                      Navigator.pop(context);
                     },
                   );
                 },

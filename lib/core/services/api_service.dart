@@ -26,4 +26,16 @@ class ApiService {
       throw Exception('Lỗi lấy dữ liệu thời tiết cho $cityName: ${response.statusCode}');
     }
   }
+  // Thêm phương thức tìm kiếm thành phố
+  Future<List<String>> searchCities(String query) async {
+    final response = await http.get(Uri.parse('$baseUrl/find?q=$query&appid=$apiKey&type=like&lang=vi'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<dynamic> cityList = data['list'];
+      return cityList.map((city) => city['name'] as String).toList();
+    } else {
+      throw Exception('Lỗi tìm kiếm vị trí: ${response.statusCode}');
+    }
+  }
 }
