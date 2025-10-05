@@ -29,7 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Weather',
+                      'Thời Tiết',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -81,14 +81,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               // Nút vị trí
-              // Padding(
-              //   padding: const EdgeInsets.all(16.0),
-              //   child: FloatingActionButton(
-              //     onPressed: () => Provider.of<WeatherProvider>(context, listen: false).fetchWeather(),
-              //     backgroundColor: const Color(0xFF00BCD4),
-              //     child: const Icon(Icons.my_location, color: Colors.white),
-              //   ),
-              // ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: FloatingActionButton(
+                  onPressed: () => Provider.of<WeatherProvider>(context, listen: false).fetchWeather(),
+                  backgroundColor: const Color(0xFF00BCD4),
+                  child: const Icon(Icons.my_location, color: Colors.white),
+                ),
+              ),
             ],
           ),
         ),
