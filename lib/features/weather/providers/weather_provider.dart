@@ -32,6 +32,7 @@ class WeatherProvider with ChangeNotifier {
 
     try {
       _weather = await weatherRepository.getWeather();
+      print('Current weather city: ${_weather?.cityName}');
       return _weather;
     } catch (e) {
       _error = e.toString().replaceFirst('Exception: ', '');

@@ -52,7 +52,7 @@ class _SearchScreenState extends State<SearchScreen> {
       return;
     }
     // Regex mới: Chấp nhận chữ cái Latin, tiếng Việt (có dấu), và khoảng trắng
-    if (!RegExp(r'^[a-zA-Zàáảãạăắằẳẵặâấầẩẫậèéẹẻẽêềếểễệìíịỉĩòóọỏõôồốổỗộơờớởỡợùúụủũưừứửữựỳýỵỷỹđ\s]+$',
+    if (!RegExp(r'^[a-zA-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ\s]+$',
         caseSensitive: false)
         .hasMatch(city)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -143,13 +143,16 @@ class _SearchScreenState extends State<SearchScreen> {
                       },
                       trailing: IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
+                        onPressed: () async {
+                          // Xóa khỏi lịch sử tìm kiếm
                           setState(() {
                             _searchHistory.removeAt(index);
-                            SharedPreferences.getInstance().then((prefs) {
-                              prefs.setStringList('search_history', _searchHistory);
-                            });
                           });
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setStringList('search_history', _searchHistory);
+
+                          // Xóa khỏi danh sách thành phố đã lưu
+                          await weatherProvider.removeCityFromList(city);
                         },
                       ),
                     );
