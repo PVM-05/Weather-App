@@ -4,38 +4,83 @@ import '../constants/api_constants.dart';
 import '../models/weather.dart';
 
 class ApiService {
-  Future<Weather> fetchWeather(double lat, double lon) async {
+  Future<Map<String, dynamic>> fetchWeather(double lat, double lon) async {
     final url = '$baseUrl/weather?lat=$lat&lon=$lon&appid=$apiKey&units=metric&lang=vi';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
-      return Weather.fromJson(jsonDecode(response.body));
+      return jsonDecode(response.body);
     } else {
       throw Exception('Failed to fetch weather: ${response.statusCode}');
     }
   }
 
-  // Hàm mới: Lấy thời tiết theo tên thành phố
-  Future<Weather> fetchWeatherByCity(String cityName) async {
+  Future<Map<String, dynamic>> fetchWeatherByCity(String cityName) async {
     final url = '$baseUrl/weather?q=${Uri.encodeComponent(cityName)}&appid=$apiKey&units=metric&lang=vi';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
-      return Weather.fromJson(jsonDecode(response.body));
+      return jsonDecode(response.body);
     } else {
       throw Exception('Lỗi lấy dữ liệu thời tiết cho $cityName: ${response.statusCode}');
     }
   }
-  // Thêm phương thức tìm kiếm thành phố
+
   Future<List<String>> searchCities(String query) async {
-    final response = await http.get(Uri.parse('$baseUrl/find?q=$query&appid=$apiKey&type=like&lang=vi'));
+    if (query.isEmpty) return [];
+    final url = '$baseUrl/find?q=${Uri.encodeComponent(query)}&appid=$apiKey&type=like&lang=vi&limit=10';
+    final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      final List<dynamic> cityList = data['list'];
+      final List<dynamic> cityList = data['list'] ?? [];
       return cityList.map((city) => city['name'] as String).toList();
     } else {
-      throw Exception('Lỗi tìm kiếm vị trí: ${response.statusCode}');
+      throw Exception('Lỗi tìm kiếm thành phố: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchForecast(double lat, double lon) async {
+    final url = '$baseUrl/forecast?lat=$lat&lon=$lon&appid=$apiKey&units=metric&lang=vi';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Lỗi lấy dự báo: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchForecastByCity(String cityName) async {
+    final url = '$baseUrl/forecast?q=${Uri.encodeComponent(cityName)}&appid=$apiKey&units=metric&lang=vi';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Lỗi lấy dự báo cho $cityName: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchAQI(double lat, double lon) async {
+    final url = '$baseUrl/air_pollution?lat=$lat&lon=$lon&appid=$apiKey';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Lỗi lấy AQI: ${response.statusCode}');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchAQIByCity(String cityName) async {
+    final url = '$baseUrl/weather?q=${Uri.encodeComponent(cityName)}&appid=$apiKey&units=metric&lang=vi';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final weatherJson = jsonDecode(response.body);
+      final lat = weatherJson['coord']['lat'] as double;
+      final lon = weatherJson['coord']['lon'] as double;
+      return await fetchAQI(lat, lon);
+    } else {
+      throw Exception('Lỗi lấy tọa độ cho $cityName: ${response.statusCode}');
     }
   }
 }

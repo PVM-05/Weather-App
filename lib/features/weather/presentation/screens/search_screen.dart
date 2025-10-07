@@ -45,16 +45,19 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _onSearch() async {
     final city = _controller.text.trim();
+
     if (city.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập tên thành phố!')),
       );
       return;
     }
-    // Regex mới: Chấp nhận chữ cái Latin, tiếng Việt (có dấu), và khoảng trắng
-    if (!RegExp(r'^[a-zA-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ\s]+$',
-        caseSensitive: false)
-        .hasMatch(city)) {
+
+    // Regex: cho phép chữ cái tiếng Việt và khoảng trắng
+    if (!RegExp(
+      r'^[a-zA-ZÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ\s]+$',
+      caseSensitive: false,
+    ).hasMatch(city)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Tên thành phố chỉ chứa chữ cái và khoảng trắng!')),
       );
@@ -62,13 +65,16 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     setState(() => _isLoading = true);
+
     final weatherProvider = Provider.of<WeatherProvider>(context, listen: false);
-    await weatherProvider.fetchWeatherByCity(city);
-    if (weatherProvider.error == null) {
-      await _saveSearchHistory(city);
-    }
+    final weather = await weatherProvider.fetchWeatherByCity(city);
+
     setState(() => _isLoading = false);
-    Navigator.pop(context); // Quay lại HomeScreen
+
+    if (weather != null && weatherProvider.error == null) {
+      await _saveSearchHistory(city);
+      Navigator.pop(context);
+    }
   }
 
   @override

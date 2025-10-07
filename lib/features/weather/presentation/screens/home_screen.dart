@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../core/models/weather.dart';
 import '../../providers/weather_provider.dart';
 import '../widgets/weather_card.dart';
 import 'search_screen.dart';
+import 'detail_screen.dart'; // Import mới
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -48,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              // Body: Danh sách WeatherCard cho địa điểm
+              // Body: Danh sách WeatherCard
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -57,25 +59,37 @@ class _HomeScreenState extends State<HomeScreen> {
                       : ListView.builder(
                     itemCount: (weatherProvider.weather != null ? 1 : 0) + weatherProvider.savedCities.length,
                     itemBuilder: (context, index) {
+                      Weather? weather;
+                      String? cityNameOverride;
                       if (index == 0 && weatherProvider.weather != null) {
-                        // Hiển thị thời tiết vị trí hiện tại
-                        return WeatherCard(
-                          weather: weatherProvider.weather,
-                          cityNameOverride: weatherProvider.weather?.cityName ?? 'Vị trí hiện tại',
-                        );
+                        weather = weatherProvider.weather;
+                        cityNameOverride = weather?.cityName ?? 'Vị trí hiện tại';
                       } else if (weatherProvider.savedCities.isNotEmpty) {
-                        // Hiển thị thời tiết cho các thành phố đã lưu
                         final cityIndex = index - (weatherProvider.weather != null ? 1 : 0);
-                        final city = weatherProvider.savedCities[cityIndex];
-                        final weather = weatherProvider.savedWeathers.length > cityIndex
+                        cityNameOverride = weatherProvider.savedCities[cityIndex];
+                        weather = weatherProvider.savedWeathers.length > cityIndex
                             ? weatherProvider.savedWeathers[cityIndex]
                             : null;
-                        return WeatherCard(
-                          weather: weather,
-                          cityNameOverride: city,
-                        );
                       }
-                      return const SizedBox.shrink(); // Tránh lỗi nếu index không hợp lệ
+                      if (weather == null) return const SizedBox.shrink();
+
+                      return GestureDetector( // Mới: Làm card clickable
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailScreen(
+                                weather: weather!,
+                                cityName: cityNameOverride!,
+                              ),
+                            ),
+                          );
+                        },
+                        child: WeatherCard(
+                          weather: weather,
+                          cityNameOverride: cityNameOverride,
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -96,4 +110,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-

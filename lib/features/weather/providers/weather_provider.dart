@@ -50,10 +50,6 @@ class WeatherProvider with ChangeNotifier {
 
     try {
       final weather = await weatherRepository.getWeatherByCity(cityName);
-      if (weather == null) {
-        _error = 'Không tìm thấy dữ liệu cho thành phố: $cityName';
-        return null;
-      }
       final index = _savedCities.indexOf(cityName);
       if (index != -1) {
         _savedWeathers[index] = weather;
@@ -93,7 +89,6 @@ class WeatherProvider with ChangeNotifier {
     _savedWeathers = savedWeathersJson
         .map((json) => Weather.fromJson(jsonDecode(json)))
         .toList();
-    // Đảm bảo độ dài của _savedWeathers khớp với _savedCities
     if (_savedWeathers.length < _savedCities.length) {
       _savedWeathers = List<Weather?>.filled(_savedCities.length, null)
         ..setRange(0, _savedWeathers.length, _savedWeathers);
