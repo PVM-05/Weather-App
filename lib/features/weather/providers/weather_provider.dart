@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/models/weather.dart';
 import '../data/weather_repository.dart';
+import 'package:http/http.dart' as http;
 
 class WeatherProvider with ChangeNotifier {
   final WeatherRepository weatherRepository;
@@ -123,6 +124,33 @@ class WeatherProvider with ChangeNotifier {
       await prefs.setStringList('saved_cities', _savedCities);
       await _saveWeathers();
       notifyListeners();
+    }
+  }
+  Future<List<String>> fetchCitySuggestions(String query) async {
+    // Chỉ tìm kiếm khi người dùng nhập ít nhất 2 ký tự
+    if (query.length < 2) {
+      return [];
+    }
+
+    final url = 'https://geocoding-api.open-meteo.com/v1/search?name=$query&count=5&language=vi&format=json';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['results'] != null) {
+          // Tạo danh sách gợi ý dưới dạng "Tên thành phố, Tên quốc gia"
+          final List<String> suggestions = (data['results'] as List)
+              .map<String>((item) => "${item['name']}, ${item['admin1'] ?? ''}, ${item['country']}")
+              .toList();
+          return suggestions;
+        }
+      }
+      return [];
+    } catch (e) {
+      // Trong trường hợp lỗi mạng hoặc lỗi phân tích cú pháp, trả về danh sách trống
+      print("Lỗi khi lấy gợi ý thành phố: $e");
+      return [];
     }
   }
 

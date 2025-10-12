@@ -83,4 +83,26 @@ class ApiService {
       throw Exception('Lỗi lấy tọa độ cho $cityName: ${response.statusCode}');
     }
   }
+  Future<List<String>> getCitySuggestions(String query) async {
+    if (query.length < 2) {
+      return []; // Chỉ tìm kiếm khi người dùng nhập ít nhất 2 ký tự
+    }
+    final url = 'https://geocoding-api.open-meteo.com/v1/search?name=$query&count=5&language=vi&format=json';
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['results'] != null) {
+          final List<String> suggestions = (data['results'] as List)
+              .map<String>((item) => "${item['name']}, ${item['country']}")
+              .toList();
+          return suggestions;
+        }
+      }
+      return [];
+    } catch (e) {
+      print(e);
+      return [];
+    }
+  }
 }
